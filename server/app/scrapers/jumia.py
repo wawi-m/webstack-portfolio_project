@@ -5,22 +5,15 @@ from datetime import datetime
 import asyncio
 import json
 
-class JijiScraper(BaseScraper):
+class JumiaScraper(BaseScraper):
     def __init__(self):
         super().__init__()
         self.min_price = 1.0
         self.max_price = 10000000.0
         self.rate_limit_delay = 1
-        self.categories = {
-            'phones': 'phones-tablets',
-            'electronics': 'electronics',
-            'vehicles': 'vehicles',
-            'property': 'property',
-            'fashion': 'fashion',
-            'jobs': 'jobs',
-            'services': 'services',
-            'home': 'home-furniture-garden',
-            'computing': 'computers-laptops'
+        self.categories = { 
+            'phones': 'phones-tablets', 
+            'televisions': 'televisions' 
         }
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -38,23 +31,25 @@ class JijiScraper(BaseScraper):
                     soup = BeautifulSoup(html_content, 'html.parser')
                     
                     # Find all product cards
-                    product_cards = soup.select('.b-list-advert__item-wrapper')
+                    product_cards = soup.select('article.prd._fb.col.c-prd')
                     
                     for card in product_cards:
                         try:
                             # Extract product link and name
-                            link_elem = card.select_one('a.b-list-advert__item-title')
+                            link_elem = card.select_one('a.core')
                             if not link_elem:
                                 continue
                             
-                            product_url = link_elem.get('href', '')
-                            if not product_url.startswith('http'):
-                                product_url = 'https://jiji.co.ke' + product_url
+                            product_url = 'https://www.jumia.co.ke' + link_elem.get('href', '')
                             
-                            product_name = link_elem.text.strip()
+                            # Extract product name
+                            name_elem = card.select_one('.name')
+                            if not name_elem:
+                                continue
+                            product_name = name_elem.text.strip()
                             
                             # Extract price
-                            price_elem = card.select_one('.b-list-advert__item-price')
+                            price_elem = card.select_one('.prc')
                             if not price_elem:
                                 continue
                             price = self.clean_price(price_elem.text.strip())
@@ -62,8 +57,8 @@ class JijiScraper(BaseScraper):
                                 continue
                             
                             # Extract image URL
-                            img_elem = card.select_one('.b-list-advert__item-image img')
-                            image_url = img_elem.get('src') if img_elem else None
+                            img_elem = card.select_one('img.img')
+                            image_url = img_elem.get('data-src') if img_elem else None
                             
                             products.append({
                                 'name': product_name,
@@ -100,12 +95,12 @@ class JijiScraper(BaseScraper):
     async def extract_price(self, html_content):
         try:
             # Main price element
-            price_elem = html_content.select_one('.qa-adp-price')
+            price_elem = html_content.select_one('span.-b.-ltr.-tal.-fs24')
             if price_elem:
                 return self.clean_price(price_elem.text.strip())
             
-            # Alternative price element
-            price_elem = html_content.select_one('.b-list-advert__item-price')
+            # Fallback price element
+            price_elem = html_content.select_one('.prc')
             if price_elem:
                 return self.clean_price(price_elem.text.strip())
             
@@ -116,12 +111,12 @@ class JijiScraper(BaseScraper):
     async def extract_product_name(self, html_content):
         try:
             # Main name element
-            name_elem = html_content.select_one('.qa-adp-title')
+            name_elem = html_content.select_one('h1.-fs20.-pts.-pbxs')
             if name_elem:
                 return name_elem.text.strip()
             
-            # Alternative name element
-            name_elem = html_content.select_one('.b-list-advert__item-title')
+            # Fallback name element
+            name_elem = html_content.select_one('.name')
             if name_elem:
                 return name_elem.text.strip()
             

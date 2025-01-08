@@ -1,12 +1,16 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 import aiohttp
 import asyncio
 from bs4 import BeautifulSoup
 from datetime import datetime
+import re
 
 class BaseScraper(ABC):
     def __init__(self):
         self.session = None
+        self.min_price = 1.0
+        self.max_price = 10000000.0
+        self.rate_limit_delay = 1
     
     async def init_session(self):
         if not self.session:
@@ -17,15 +21,18 @@ class BaseScraper(ABC):
             await self.session.close()
             self.session = None
     
-    @abstractmethod
-    async def extract_price(self, html_content):
-        """Extract price from HTML content"""
-        pass
-    
-    @abstractmethod
-    async def extract_product_name(self, html_content):
-        """Extract product name from HTML content"""
-        pass
+    def clean_price(self, price_text):
+        """Clean price text and convert to float"""
+        try:
+            # Remove currency symbol and commas
+            price_match = re.search(r'[\d,]+', price_text)
+            if price_match:
+                price = float(price_match.group().replace(',', ''))
+                if self.min_price <= price <= self.max_price:
+                    return price
+        except (ValueError, TypeError):
+            pass
+        return None
     
     async def get_product_details(self, url):
         """Get product details from URL"""
@@ -36,8 +43,8 @@ class BaseScraper(ABC):
                     html_content = await response.text()
                     soup = BeautifulSoup(html_content, 'html.parser')
                     
-                    price = await self.extract_price(soup)
-                    name = await self.extract_product_name(soup)
+                    price = await self.extract_price(soup) if hasattr(self, 'extract_price') else None
+                    name = await self.extract_product_name(soup) if hasattr(self, 'extract_product_name') else None
                     
                     return {
                         'name': name,

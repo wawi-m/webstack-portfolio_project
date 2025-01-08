@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, render_template, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -32,7 +32,7 @@ def create_app():
     # Serve frontend files
     @app.route('/')
     def serve_frontend():
-        return send_from_directory(frontend_dir, 'index.html')
+        return render_template('index.html')
 
     @app.route('/<path:path>')
     def serve_static(path):
@@ -65,5 +65,9 @@ def create_app():
     # Import and register blueprints
     from app.api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api/v1')
+    
+    @app.route('/visualization/<int:product_id>')
+    def visualization(product_id):
+        return render_template('visualization.html', product_id=product_id)
     
     return app

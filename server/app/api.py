@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request, render_template
 from app.models import Product, PriceHistory
 from app import db
 from datetime import datetime, timedelta
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 import plotly.graph_objects as go
 import plotly.utils
 import json
@@ -22,7 +22,10 @@ def index():
             "search": "/api/v1/products/search",
             "price_history": "/api/v1/products/<id>/prices",
             "price_visualization": "/api/v1/products/<id>/visualization",
-            "price_visualization_data": "/api/v1/products/<id>/visualization/data"
+            "price_visualization_data": "/api/v1/products/<id>/visualization/data",
+            "categories": "/api/v1/categories",
+            "platforms": "/api/v1/platforms",
+            "stats": "/api/v1/stats"
         },
         "documentation": {
             "description": "Track and visualize e-commerce product prices",
@@ -38,9 +41,66 @@ def index():
 
 @bp.route('/products', methods=['GET'])
 def get_products():
-    """Get all products with their latest prices"""
-    products = Product.query.all()
-    return jsonify([product.to_dict() for product in products])
+    """Get all products with optional filtering"""
+    try:
+        # Get query parameters
+        category = request.args.get('category')
+        platform = request.args.get('platform')
+        search = request.args.get('search')
+        sort_by = request.args.get('sort')
+        
+        # Start with base query
+        query = Product.query
+        
+        # Apply filters
+        if category:
+            query = query.filter(Product.category == category)
+        if platform:
+            query = query.filter(Product.platform == platform)
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(Product.name.ilike(search_term))
+            
+        # Apply sorting
+        if sort_by == 'price_low':
+            query = query.order_by(Product.current_price.asc())
+        elif sort_by == 'price_high':
+            query = query.order_by(Product.current_price.desc())
+        elif sort_by == 'latest':
+            query = query.order_by(Product.last_updated.desc())
+        
+        # Execute query
+        products = query.all()
+        
+        # Format response
+        response = []
+        for product in products:
+            # Get price history
+            price_history = PriceHistory.query.filter_by(product_id=product.id).order_by(PriceHistory.timestamp.desc()).limit(30).all()
+            history = [{'price': h.price, 'timestamp': h.timestamp.isoformat()} for h in price_history]
+            
+            response.append({
+                'id': product.id,
+                'name': product.name,
+                'url': product.url,
+                'platform': product.platform,
+                'category': product.category,
+                'current_price': product.current_price,
+                'last_updated': product.last_updated.isoformat(),
+                'price_history': history
+            })
+        
+        return jsonify({
+            'success': True,
+            'products': response,
+            'total': len(response)
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @bp.route('/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
@@ -231,3 +291,79 @@ def get_visualization_data(product_id):
     }
     
     return jsonify(data)
+
+@bp.route('/categories', methods=['GET'])
+def get_categories():
+    """Get available categories"""
+    try:
+        categories = [
+            {'id': 'phones', 'name': 'Mobile Phones'},
+            {'id': 'televisions', 'name': 'Televisions'}
+        ]
+        return jsonify({
+            'success': True,
+            'categories': categories
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/platforms', methods=['GET'])
+def get_platforms():
+    """Get available platforms"""
+    try:
+        platforms = [
+            {'id': 'jumia', 'name': 'Jumia'},
+            {'id': 'kilimall', 'name': 'Kilimall'},
+            {'id': 'jiji', 'name': 'Jiji'}
+        ]
+        return jsonify({
+            'success': True,
+            'platforms': platforms
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@bp.route('/stats', methods=['GET'])
+def get_stats():
+    """Get platform and category statistics"""
+    try:
+        # Get counts by platform
+        platform_stats = db.session.query(
+            Product.platform,
+            func.count(Product.id).label('count'),
+            func.avg(Product.current_price).label('avg_price')
+        ).group_by(Product.platform).all()
+        
+        # Get counts by category
+        category_stats = db.session.query(
+            Product.category,
+            func.count(Product.id).label('count'),
+            func.avg(Product.current_price).label('avg_price')
+        ).group_by(Product.category).all()
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'platforms': [{
+                    'name': stat.platform,
+                    'count': stat.count,
+                    'avg_price': float(stat.avg_price) if stat.avg_price else 0
+                } for stat in platform_stats],
+                'categories': [{
+                    'name': stat.category,
+                    'count': stat.count,
+                    'avg_price': float(stat.avg_price) if stat.avg_price else 0
+                } for stat in category_stats]
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
