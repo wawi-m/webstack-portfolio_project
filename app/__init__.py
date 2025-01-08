@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import os
@@ -16,8 +16,17 @@ def create_app():
     db.init_app(app)
     CORS(app)
     
-    # Root URL route
+    # Serve frontend files
     @app.route('/')
+    def serve_frontend():
+        return send_from_directory('../frontenddir', 'index.html')
+
+    @app.route('/<path:path>')
+    def serve_static(path):
+        return send_from_directory('../frontenddir', path)
+    
+    # Root URL route
+    @app.route('/api/v1/')
     def root():
         return jsonify({
             "message": "Welcome to the E-commerce Price Tracker API",
