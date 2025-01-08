@@ -23,6 +23,16 @@ def index():
             "price_history": "/api/v1/products/<id>/prices",
             "price_visualization": "/api/v1/products/<id>/visualization",
             "price_visualization_data": "/api/v1/products/<id>/visualization/data"
+        },
+        "documentation": {
+            "description": "Track and visualize e-commerce product prices",
+            "features": [
+                "Product listing and search",
+                "Price history tracking",
+                "Interactive price visualizations",
+                "Statistical analysis"
+            ],
+            "example_ids": [1, 2, 3, 4, 5]
         }
     })
 

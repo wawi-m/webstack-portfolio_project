@@ -22,12 +22,30 @@ def create_app():
         return jsonify({
             "message": "Welcome to the E-commerce Price Tracker API",
             "version": "1.0",
-            "api_documentation": "/api/v1/",
             "endpoints": {
+                "api_root": "/api/v1/",
                 "products": "/api/v1/products",
                 "product_detail": "/api/v1/products/<id>",
                 "search": "/api/v1/products/search",
-                "price_history": "/api/v1/products/<id>/prices"
+                "price_history": "/api/v1/products/<id>/prices",
+                "price_visualization": "/api/v1/products/<id>/visualization",
+                "price_visualization_data": "/api/v1/products/<id>/visualization/data"
+            },
+            "documentation": {
+                "description": "Track and visualize e-commerce product prices across different platforms",
+                "features": [
+                    "Product listing and search",
+                    "Price history tracking",
+                    "Interactive price visualizations",
+                    "Statistical analysis"
+                ],
+                "example_ids": [1, 2, 3, 4, 5],
+                "visualization_features": [
+                    "Interactive line charts",
+                    "7-day moving average",
+                    "Price statistics dashboard",
+                    "Zoom and pan controls"
+                ]
             }
         })
     
