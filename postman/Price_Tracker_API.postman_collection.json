@@ -1,0 +1,205 @@
+{
+	"info": {
+		"_postman_id": "e9b23d5f-8b2a-4b2e-9c8e-8f2f3d7b5a1d",
+		"name": "Price Tracker API",
+		"description": "E-commerce Price Tracker API Documentation\n\nThis API allows you to track product prices across different e-commerce platforms. Features include:\n- Product listing and search\n- Detailed price history\n- Interactive price visualizations\n- Statistical analysis\n\nBase URL: {{base_url}}/api/v1",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "API Info",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/",
+					"host": ["{{base_url}}"],
+					"path": ["api", "v1", ""]
+				},
+				"description": "Get API information and list of all available endpoints"
+			},
+			"response": []
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "List All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "products"]
+						},
+						"description": "Get all tracked products with their latest prices"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "products", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "3",
+									"description": "Product ID"
+								}
+							]
+						},
+						"description": "Get detailed information about a specific product including recent price history"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products/search?q=mouse&platform=jumia",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "products", "search"],
+							"query": [
+								{
+									"key": "q",
+									"value": "mouse",
+									"description": "Search term"
+								},
+								{
+									"key": "platform",
+									"value": "jumia",
+									"description": "Platform filter (optional)"
+								}
+							]
+						},
+						"description": "Search products by name and optionally filter by platform"
+					},
+					"response": []
+				}
+			],
+			"description": "Product management endpoints"
+		},
+		{
+			"name": "Price History",
+			"item": [
+				{
+					"name": "Get Price History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products/:id/prices?days=7",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "products", ":id", "prices"],
+							"query": [
+								{
+									"key": "days",
+									"value": "7",
+									"description": "Number of days of price history (default: 30)"
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "3",
+									"description": "Product ID"
+								}
+							]
+						},
+						"description": "Get price history data points for a specific product"
+					},
+					"response": []
+				},
+				{
+					"name": "View Price History Chart",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products/:id/visualization?days=7",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "products", ":id", "visualization"],
+							"query": [
+								{
+									"key": "days",
+									"value": "7",
+									"description": "Number of days to visualize (default: 30)"
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "3",
+									"description": "Product ID"
+								}
+							]
+						},
+						"description": "View an interactive HTML visualization of price history. Best viewed in browser.\n\nFeatures:\n- Interactive line chart\n- 7-day moving average\n- Price statistics dashboard\n- Zoom and pan controls\n\nTo view:\n1. Send request\n2. Click 'Visualize' tab\n3. Select 'HTML'\n4. Click 'Open in Browser' for best experience"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Visualization Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/products/:id/visualization/data?days=7",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "products", ":id", "visualization", "data"],
+							"query": [
+								{
+									"key": "days",
+									"value": "7",
+									"description": "Number of days to include (default: 30)"
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "3",
+									"description": "Product ID"
+								}
+							]
+						},
+						"description": "Get price history visualization data in JSON format\n\nReturns:\n- Product details\n- Price statistics (current, min, max, average)\n- Complete price history data points\n- Date range information\n\nUseful for:\n- Custom visualizations\n- Data analysis\n- Integration with other systems"
+					},
+					"response": []
+				}
+			],
+			"description": "Price history and visualization endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string",
+			"description": "Base URL for the API"
+		}
+	]
+}
