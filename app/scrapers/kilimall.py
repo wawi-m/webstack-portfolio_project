@@ -5,7 +5,7 @@ from datetime import datetime
 import asyncio
 import json
 
-class JumiaScraper(BaseScraper):
+class KilimallScraper(BaseScraper):
     def __init__(self):
         super().__init__()
         self.min_price = 1.0
@@ -13,15 +13,11 @@ class JumiaScraper(BaseScraper):
         self.rate_limit_delay = 1
         self.categories = {
             'phones': 'phones-tablets',
-            'computing': 'computing',
-            'electronics': 'electronics',
+            'electronics': 'consumer-electronics',
             'fashion': 'fashion',
-            'health': 'health-beauty',
-            'gaming': 'gaming',
-            'supermarket': 'supermarket',
-            'home': 'home-office',
-            'baby': 'baby-products',
-            'sporting': 'sporting-goods'
+            'home': 'home-living',
+            'computing': 'computing',
+            'beauty': 'health-beauty'
         }
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -39,25 +35,23 @@ class JumiaScraper(BaseScraper):
                     soup = BeautifulSoup(html_content, 'html.parser')
                     
                     # Find all product cards
-                    product_cards = soup.select('article.prd._fb.col.c-prd')
+                    product_cards = soup.select('.product-item')
                     
                     for card in product_cards:
                         try:
                             # Extract product link and name
-                            link_elem = card.select_one('a.core')
+                            link_elem = card.select_one('.product-name a')
                             if not link_elem:
                                 continue
                             
-                            product_url = 'https://www.jumia.co.ke' + link_elem.get('href', '')
+                            product_url = link_elem.get('href', '')
+                            if not product_url.startswith('http'):
+                                product_url = 'https://www.kilimall.co.ke' + product_url
                             
-                            # Extract product name
-                            name_elem = card.select_one('.name')
-                            if not name_elem:
-                                continue
-                            product_name = name_elem.text.strip()
+                            product_name = link_elem.text.strip()
                             
                             # Extract price
-                            price_elem = card.select_one('.prc')
+                            price_elem = card.select_one('.product-price')
                             if not price_elem:
                                 continue
                             price = self.clean_price(price_elem.text.strip())
@@ -65,8 +59,8 @@ class JumiaScraper(BaseScraper):
                                 continue
                             
                             # Extract image URL
-                            img_elem = card.select_one('img.img')
-                            image_url = img_elem.get('data-src') if img_elem else None
+                            img_elem = card.select_one('.product-img img')
+                            image_url = img_elem.get('src') if img_elem else None
                             
                             products.append({
                                 'name': product_name,
@@ -103,12 +97,12 @@ class JumiaScraper(BaseScraper):
     async def extract_price(self, html_content):
         try:
             # Main price element
-            price_elem = html_content.select_one('span.-b.-ltr.-tal.-fs24')
+            price_elem = html_content.select_one('.product-price')
             if price_elem:
                 return self.clean_price(price_elem.text.strip())
             
-            # Fallback price element
-            price_elem = html_content.select_one('.prc')
+            # Alternative price element
+            price_elem = html_content.select_one('.now-price')
             if price_elem:
                 return self.clean_price(price_elem.text.strip())
             
@@ -119,12 +113,12 @@ class JumiaScraper(BaseScraper):
     async def extract_product_name(self, html_content):
         try:
             # Main name element
-            name_elem = html_content.select_one('h1.-fs20.-pts.-pbxs')
+            name_elem = html_content.select_one('.product-name')
             if name_elem:
                 return name_elem.text.strip()
             
-            # Fallback name element
-            name_elem = html_content.select_one('.name')
+            # Alternative name element
+            name_elem = html_content.select_one('h1.product-title')
             if name_elem:
                 return name_elem.text.strip()
             

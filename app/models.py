@@ -6,6 +6,9 @@ class Product(db.Model):
     name = db.Column(db.String(200), nullable=False)
     url = db.Column(db.String(500), nullable=False)
     platform = db.Column(db.String(50), nullable=False)  # e.g., 'jumia', 'kilimall', 'masoko'
+    category = db.Column(db.String(50))  # Category of the product
+    current_price = db.Column(db.Float)  # Current price of the product
+    last_updated = db.Column(db.DateTime)  # Last time the price was updated
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     prices = db.relationship('PriceHistory', backref='product', lazy=True)
 
@@ -15,8 +18,10 @@ class Product(db.Model):
             'name': self.name,
             'url': self.url,
             'platform': self.platform,
-            'created_at': self.created_at.isoformat(),
-            'current_price': self.prices[-1].price if self.prices else None
+            'category': self.category,
+            'current_price': self.current_price,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'created_at': self.created_at.isoformat()
         }
 
 class PriceHistory(db.Model):
